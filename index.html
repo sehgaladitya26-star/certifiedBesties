@@ -1391,9 +1391,13 @@ const bgm = document.getElementById('bgm');
 
 function startBgm(){
   if (bgmStarted || !bgm) return;
-  bgmStarted = true;
   bgm.volume = 0.35; // tweak to taste
-  bgm.play().catch(()=>{});
+  bgm.play().then(()=>{
+    bgmStarted = true;
+  }).catch(()=>{
+    // autoplay was blocked (e.g. this call wasn't from a real click) — leave
+    // bgmStarted false so the next real tap tries again
+  });
 }
 
 window.addEventListener('load', ()=>{
@@ -1405,7 +1409,7 @@ window.addEventListener('load', ()=>{
     dockRow.style.visibility='visible';
     hint.style.visibility='visible';
     advanceChat();
-  }, 5000);
+  }, 4000);
   viewChat.addEventListener('click', advanceChat);
 });
 

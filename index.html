@@ -333,6 +333,8 @@
 <body>
 <!-- typing sound effect: plays only while the intro bubble text is being typed out -->
 <audio id="typingSound" src="assets/typing_sound.mp3" preload="auto" loop></audio>
+<!-- background music: loops for the whole experience -->
+<audio id="bgm" src="assets/bgm.m4a" preload="auto" loop></audio>
 <div id="introOverlay">
 <div class="view active" id="view-chat">
   <div id="quote">
@@ -1384,6 +1386,15 @@ const viewStats = document.getElementById('view-stats');
 
 let idx = -1;
 let typing = false;
+let bgmStarted = false;
+const bgm = document.getElementById('bgm');
+
+function startBgm(){
+  if (bgmStarted || !bgm) return;
+  bgmStarted = true;
+  bgm.volume = 0.35; // tweak to taste
+  bgm.play().catch(()=>{});
+}
 
 window.addEventListener('load', ()=>{
   setTimeout(()=>{
@@ -1394,7 +1405,7 @@ window.addEventListener('load', ()=>{
     dockRow.style.visibility='visible';
     hint.style.visibility='visible';
     advanceChat();
-  }, 3200);
+  }, 5000);
   viewChat.addEventListener('click', advanceChat);
 });
 
@@ -1408,6 +1419,7 @@ async function playChatLine(line){
 }
 
 function advanceChat(){
+  startBgm();
   if(typing) return;
   idx++;
   if(idx < chatLines.length){

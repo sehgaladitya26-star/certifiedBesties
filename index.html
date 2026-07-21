@@ -412,6 +412,21 @@ let SPECIALS = [];
 let CHAT_NAMES = ['A', 'B'];
 let dataReady = false;
 
+/* Mobile performance: the SVG feTurbulence/feDisplacementMap "hand-drawn" filters are
+   very expensive to recompute per frame on mobile GPUs, and drawMain rebuilds every
+   animating branch's filtered DOM each frame during the bloom — that's the main cause
+   of jank on phones. On mobile we skip these filters entirely. The branch geometry
+   already has organic hand-jitter baked into branchPath(), so the look degrades
+   gracefully (slightly cleaner lines) rather than looking flat/wrong.
+   Also gate the CSS blur on the modal backdrop, another per-frame-expensive effect. */
+const IS_MOBILE = (typeof window !== 'undefined') &&
+  (window.matchMedia && window.matchMedia('(max-width: 820px), (pointer: coarse)').matches);
+
+// Applies a roughen filter only on desktop; no-op on mobile.
+function applyRough(el, filterId){
+  if(!IS_MOBILE) el.setAttribute('filter', filterId);
+}
+
 /* Base URL for media files. Leave as 'media/' to serve from a local folder next to
    this file. To host media remotely (recommended once your media folder gets large —
    e.g. Cloudflare R2, since GitHub Pages caps individual files at 100MB and strongly
@@ -613,7 +628,7 @@ function colorFor(b){
 
 /* ---------------- render trunk ---------------- */
 const gTrunk = document.createElementNS(svgns,'g');
-gTrunk.setAttribute('filter','url(#rough)');
+applyRough(gTrunk, 'url(#rough)');
 const trunkPath = document.createElementNS(svgns,'path');
 trunkPath.setAttribute('d', branchPath(trunkBase, hub, 42));
 trunkPath.setAttribute('stroke','var(--ink)');
@@ -954,7 +969,7 @@ function drawMain(st, g){
   g.style.pointerEvents = isDimmed ? 'none' : 'auto'; // dimmed branches can't steal clicks meant for the open branch's subtopics
 
   const wrap = document.createElementNS(svgns,'g');
-  wrap.setAttribute('filter', b.isSpecial? 'url(#rough)' : 'url(#roughSoft)');
+  applyRough(wrap, b.isSpecial? 'url(#rough)' : 'url(#roughSoft)');
 
   const p1 = document.createElementNS(svgns,'path');
   p1.setAttribute('d', branchPath(hub, tip, seedBase));
@@ -1005,7 +1020,7 @@ function drawMain(st, g){
     circ.setAttribute('fill', col.fill);
     circ.setAttribute('stroke', col.stroke);
     circ.setAttribute('stroke-width', st.idx===activeMain? 5 : 3.5);
-    circ.setAttribute('filter','url(#roughSoft)');
+    applyRough(circ, 'url(#roughSoft)');
     nodeG.appendChild(circ);
 
     // label underneath the node, always visible, in serif — now a child of
@@ -1042,7 +1057,7 @@ function drawMain(st, g){
       const subTip = polar(tip.x, tip.y, subAngle, subLen*eased);
 
       const sg = document.createElementNS(svgns,'g');
-      sg.setAttribute('filter','url(#roughSoft)');
+      applyRough(sg, 'url(#roughSoft)');
       sg.style.opacity = Math.min(1, localT*1.4);
 
       const sp = document.createElementNS(svgns,'path');

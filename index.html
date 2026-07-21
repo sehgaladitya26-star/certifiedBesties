@@ -331,6 +331,8 @@
 </style>
 </head>
 <body>
+<!-- typing sound effect: plays only while the intro bubble text is being typed out -->
+<audio id="typingSound" src="assets/typing_sound.mp3" preload="auto" loop></audio>
 <div id="introOverlay">
 <div class="view active" id="view-chat">
   <div id="quote">
@@ -1335,6 +1337,8 @@ const stats = [
   { num:'8,700+', label:'photos & videos' },
 ];
 
+const typingSound = document.getElementById('typingSound');
+
 function typeInto(el, text, speed=26){
   return new Promise(resolve=>{
     el.innerHTML = '';
@@ -1342,6 +1346,19 @@ function typeInto(el, text, speed=26){
     const cursor = document.createElement('span');
     cursor.className='cursor';
     cursor.textContent='_';
+
+    if (typingSound) {
+      typingSound.currentTime = 0;
+      typingSound.play().catch(()=>{});
+    }
+
+    function stopSound(){
+      if (typingSound) {
+        typingSound.pause();
+        typingSound.currentTime = 0;
+      }
+    }
+
     function step(){
       if(i <= text.length){
         el.textContent = text.slice(0,i);
@@ -1350,6 +1367,7 @@ function typeInto(el, text, speed=26){
         setTimeout(step, speed);
       } else {
         cursor.remove();
+        stopSound();
         resolve();
       }
     }
